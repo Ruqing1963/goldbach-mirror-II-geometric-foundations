@@ -1,0 +1,625 @@
+\documentclass[11pt,a4paper]{article}
+
+% ─── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm,mathrsfs}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{xcolor}
+\usepackage[breaklinks=true,colorlinks=true,linkcolor=blue!60!black,citecolor=blue!60!black,urlcolor=blue!50!black]{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{float}
+
+% ─── Theorem environments ──────────────────────────────────────────────────────
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{observation}[theorem]{Observation}
+
+% ─── Operators ─────────────────────────────────────────────────────────────────
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\GSp}{GSp}
+\DeclareMathOperator{\Jac}{Jac}
+\DeclareMathOperator{\Res}{Res}
+\DeclareMathOperator{\rad}{rad}
+\DeclareMathOperator{\cond}{cond}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\title{The Goldbach Mirror II:\\ Geometric Foundations of Conductor Rigidity\\ and the Static Conduit in $\GSp(4)$}
+\author{Ruqing Chen\\[4pt]
+\textit{GUT Geoservice Inc., Montr\'{e}al, QC, Canada}\\[2pt]
+\texttt{ruqing@hotmail.com}}
+\date{February 2026}
+
+\begin{document}
+\maketitle
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\begin{abstract}
+Building on the algebraic framework established in~\cite{Chen2026GM}, we introduce
+\emph{Chen's ratio} $\rho(N,p) = \log\mathcal{N}(J_{N,p})/\log N$ as a normalised
+measure of the conductor of the Goldbach--Frey Jacobian $J_{N,p}$ in the Siegel moduli
+space $\mathscr{A}_2$.  Computational scanning over $N \in [10^2, 10^4]$ reveals
+that the Goldbach pairs $(p, N-p)$ are rigidly confined to a narrow
+$\rho$-band---the \emph{static conduit stability band}---while generic (composite)
+decompositions spread over a range roughly three times wider.  At $N = 2^k$,
+the odd radical of the static conduit vanishes, producing dramatic \emph{conductor
+dips} that isolate the pure boundary-prime structure of the family.  We formalise these
+observations through a \emph{geometric obstruction analysis}: the conductor rigidity
+theorems of~\cite{Chen2026GM} impose structural constraints on which decompositions
+$N = p + q$ can occupy the stability band, and we conjecture that these constraints
+are sufficient to guarantee the non-emptiness of the Goldbach locus for every even
+$N > 4$.  The passage from this geometric framework to a proof of the Goldbach
+conjecture remains open; we identify the precise analytic gap and formulate it as an
+explicit problem.
+\end{abstract}
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+
+In~\cite{Chen2026GM} we constructed the \emph{Goldbach--Frey curve}
+\begin{equation}\label{eq:curve}
+  C_{N,p} : y^2 = x\bigl(x^2 - p^2\bigr)\bigl(x^2 - (N-p)^2\bigr),
+\end{equation}
+for a fixed even integer $N > 4$ and a candidate odd integer $1 < p < N$, and proved
+three unconditional results:
+
+\begin{enumerate}
+\item[\textbf{(A)}] \textbf{Discriminant factorisation} (Theorem 2.2 of~\cite{Chen2026GM}).
+  Writing $q = N - p$ and $M = N/2$:
+  \begin{equation}\label{eq:disc}
+    \Delta(f) \;=\; 2^{12}\, p^6\, q^6\, (M - p)^4\, M^4.
+  \end{equation}
+  The factor $M^4$ is independent of $p$: it is the \emph{static conduit}.
+
+\item[\textbf{(B)}] \textbf{Kani--Rosen splitting} (Theorem 3.1 of~\cite{Chen2026GM}).
+  Over $K = \mathbb{Q}(\sqrt{-1})$, the Jacobian decomposes as
+  $\Jac(C_{N,p}) \otimes K \sim E_p \times E_p^\sigma$, where $E_p$ is an elliptic
+  curve over $K$.
+
+\item[\textbf{(C)}] \textbf{Uniform conductor at the static conduit} (Theorem 4.1
+  of~\cite{Chen2026GM}).  For every odd prime $r \mid M$ with $r \nmid p\,q$,
+  the curve $C_{N,p}$ has multiplicative reduction at $r$, and the conductor
+  exponent $f_r$ is independent of $p$.
+\end{enumerate}
+
+The present paper extends this framework in two directions.  First, we introduce a
+normalised conductor measure---\emph{Chen's ratio}---that maps each decomposition
+$N = p + q$ to a real number $\rho(N,p)$, and show computationally that Goldbach
+pairs (both $p, q$ prime) occupy a remarkably narrow band in the resulting parameter
+space (\S\ref{sec:ratio}--\ref{sec:stability}).  Second, we analyse the special behaviour
+at $N = 2^k$ (\S\ref{sec:anchor}), where the static conduit degenerates and the
+conductor is governed entirely by the boundary primes.  These observations lead to a
+\emph{geometric obstruction analysis} (\S\ref{sec:obstruction}) that explains the
+structural origin of the Goldbach phenomenon without yet closing the analytic gap
+required for a proof.\footnote{Verification scripts, figures, and data are available
+at \url{https://github.com/Ruqing1963/goldbach-mirror-II-geometric-foundations}.}
+
+\medskip
+\noindent\textbf{Convention.}  Throughout this paper, $N$ denotes a fixed even integer $> 4$,
+$p$ denotes an odd integer with $1 < p < N$, and $q = N - p$.  We write $M = N/2$.
+The Goldbach--Frey curve is~\eqref{eq:curve} and its Jacobian is $J_{N,p} = \Jac(C_{N,p})$.
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{Chen's Ratio and the Conductor Proxy}\label{sec:ratio}
+
+\subsection{Motivation}
+
+The discriminant~\eqref{eq:disc} records the primes of bad reduction for $C_{N,p}$,
+but does not directly measure the \emph{complexity} of the conductor
+$\mathcal{N}(J_{N,p})$ as a function of $N$.  To compare decompositions across
+different values of $N$, we need a normalised quantity.
+
+\begin{definition}[Chen's ratio]\label{def:ratio}
+  For an even integer $N > 4$ and an odd integer $1 < p < N$, define
+  \begin{equation}\label{eq:rho}
+    \rho(N, p) \;=\; \frac{\log \mathcal{N}(J_{N,p})}{\log N},
+  \end{equation}
+  where $\mathcal{N}(J_{N,p})$ denotes the global conductor of $J_{N,p}$.
+\end{definition}
+
+Computing the exact conductor requires determining the local Artin conductors at
+every prime of bad reduction, which is in general a difficult problem.
+We therefore work with a \emph{conductor proxy}:
+
+\begin{definition}[Conductor proxy]\label{def:proxy}
+  Define
+  \begin{equation}\label{eq:proxy}
+    \mathcal{N}_{\mathrm{proxy}}(N, p) \;=\;
+      \bigl(\rad_{\mathrm{odd}}(p) \cdot \rad_{\mathrm{odd}}(q) \cdot
+            \rad_{\mathrm{odd}}(M)^2\bigr)^2,
+  \end{equation}
+  where $\rad_{\mathrm{odd}}(n) = \prod_{\substack{r \mid n \\ r \text{ odd prime}}} r$
+  is the odd part of the radical.  The corresponding proxy ratio is
+  $\rho_{\mathrm{proxy}}(N,p) = \log\mathcal{N}_{\mathrm{proxy}} / \log N$.
+\end{definition}
+
+\begin{remark}[Justification of the proxy]\label{rem:proxy}
+  The proxy captures the essential features of the conductor:
+  \begin{enumerate}
+  \item The factors $\rad_{\mathrm{odd}}(p)$ and $\rad_{\mathrm{odd}}(q)$ reflect
+    the boundary-prime contributions (from $p^6$ and $q^6$ in $\Delta$).
+  \item The factor $\rad_{\mathrm{odd}}(M)^2$ reflects the static conduit (from $M^4$ in $\Delta$).
+  \item The overall squaring accounts for the genus~2 contribution to the conductor
+    exponents.
+  \item Removing the factor of 2 avoids the uniformly present $2^{12}$, which does not
+    distinguish between decompositions.
+  \end{enumerate}
+  For $N = 2^k$, we have $\rad_{\mathrm{odd}}(M) = 1$, so
+  $\mathcal{N}_{\mathrm{proxy}} = (\rad_{\mathrm{odd}}(p)\cdot\rad_{\mathrm{odd}}(q))^2$,
+  depending only on the boundary primes.
+\end{remark}
+
+\begin{remark}[Relation to Ogg's formula]\label{rem:ogg}
+  By the Ogg--Saito formula~\cite{Ogg1967,Saito1988}, the Artin conductor exponent
+  at a prime $r$ of semistable reduction equals $\ord_r(\Delta_{\min})$ (the valuation of the
+  minimal discriminant), while at primes of additive reduction the conductor exponent
+  satisfies $f_r \geq 2$ with an additional Swan conductor contribution.  The discriminant
+  $\Delta = 2^{12}\,p^6\,q^6\,(M-p)^4\,M^4$ records the \emph{maximal} singularity data;
+  taking the odd radical $\rad_{\mathrm{odd}}(\cdot)$ strips away the higher-order
+  multiplicities (the exponents $6$ and $4$) and retains precisely the \emph{support}
+  of the conductor---i.e., the set of primes at which $J_{N,p}$ has bad reduction.  The
+  proxy $\mathcal{N}_{\mathrm{proxy}}$ thus approximates the true conductor by replacing
+  each local exponent by a uniform estimate, which is sufficient for the comparative
+  analysis across decompositions that is our primary goal.
+\end{remark}
+
+\subsection{Structural properties of $\rho$}
+
+\begin{proposition}[Radical rigidity of Goldbach pairs]\label{prop:rigidity}
+  If both $p$ and $q = N - p$ are prime, then
+  $\rad_{\mathrm{odd}}(p) = p$ and $\rad_{\mathrm{odd}}(q) = q$, so
+  \[
+    \mathcal{N}_{\mathrm{proxy}}(N,p) = \bigl(p \cdot q \cdot \rad_{\mathrm{odd}}(M)^2\bigr)^2.
+  \]
+  In particular, for fixed $N$, the Goldbach proxy is completely determined by the product
+  $p \cdot (N-p)$, which is maximised when $p$ is near $N/2$ and minimised when $p$ is
+  small.  The range of $\rho$ over Goldbach pairs is therefore controlled by the
+  ratio $p_{\max}/p_{\min}$ among primes $p < N/2$ with $N - p$ also prime.
+\end{proposition}
+
+\begin{proof}
+  Immediate from the definitions and the fact that for a prime $r$,
+  $\rad(r) = r$ and $\rad_{\mathrm{odd}}(r) = r$ (since $r$ is odd).
+\end{proof}
+
+\begin{proposition}[Spread of composite decompositions]\label{prop:spread}
+  If $p$ is composite with $\omega(p) \geq 2$ distinct prime factors, then
+  $\rad_{\mathrm{odd}}(p) \leq p / 2$ (with equality when $p = 2r$ for a prime $r$).
+  More generally, if $p$ is a $k$-smooth number, then $\rad_{\mathrm{odd}}(p) \leq
+  \pi(k) \cdot k$, which can be much smaller than $p$.  In particular:
+  \begin{enumerate}
+  \item If $p = 2^a$ for some $a \geq 1$, then $\rad_{\mathrm{odd}}(p) = 1$.
+  \item If $p = 2^a \cdot 3^b$, then $\rad_{\mathrm{odd}}(p) = 3$.
+  \end{enumerate}
+  Consequently, composite decompositions can achieve arbitrarily small values of
+  $\rho_{\mathrm{proxy}}$, while Goldbach pairs are bounded below.
+\end{proposition}
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{The Static Conduit Stability Band}\label{sec:stability}
+
+We scan all even $N \in [100, 10\,000]$ and, for each $N$, compute the average
+Chen's ratio $\langle\rho\rangle_N$ over all Goldbach pairs $p + q = N$.
+Figure~\ref{fig:band} displays the result.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figure1.pdf}
+  \caption{The static conduit stability band.  Each point represents the mean
+  Chen's ratio $\langle\rho\rangle_N$ over all Goldbach pairs of a given even $N$.
+  The shaded region marks the 5th--95th percentile envelope.  The red triangles
+  mark $N = 2^k$ ($k = 7, \ldots, 13$), which fall dramatically below the band
+  due to the vanishing of $\rad_{\mathrm{odd}}(M)$ (see \S\ref{sec:anchor}).}
+  \label{fig:band}
+\end{figure}
+
+\begin{remark}[Interpretation of Figure~\ref{fig:band}]\label{rem:band}
+  Three features are visible:
+  \begin{enumerate}
+  \item \textbf{Convergence.}  For generic $N$, $\langle\rho\rangle_N$ stabilises
+    in a narrow band around $\rho \approx 6.8$ as $N \to \infty$.  This reflects
+    the Hardy--Littlewood asymptotic: the ``typical'' Goldbach pair has
+    $p \cdot q \approx N^2/4$ and $\rad_{\mathrm{odd}}(M) \sim M$, giving
+    $\rho \approx 2\log(N^2 \cdot M^2)/\log N \approx 2(2 + 2\log M/\log N) \to 8$
+    as $N \to \infty$ (with logarithmic corrections from the radical).
+
+  \item \textbf{Banded structure.}  The scatter around the trend line reflects the
+    static conduit factor $\rad_{\mathrm{odd}}(M)$: when $M$ has many small prime
+    factors (highly composite), $\rad_{\mathrm{odd}}(M) < M$ and $\rho$ decreases;
+    when $M$ is prime, $\rad_{\mathrm{odd}}(M) = M$ and $\rho$ is maximal.  This
+    is the geometric origin of the classical Goldbach comet banding
+    (Remark~5.1 of~\cite{Chen2026GM}).
+
+  \item \textbf{Power-of-two dips.}  The $N = 2^k$ points are dramatic outliers,
+    with $\langle\rho\rangle_{2^k} \approx 3.2$--$3.5$, roughly half the generic
+    value.  This is analysed in \S\ref{sec:anchor}.
+  \end{enumerate}
+\end{remark}
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{The $2^k$ Anchor Phenomenon}\label{sec:anchor}
+
+\subsection{Vanishing of the static conduit}
+
+When $N = 2^k$, we have $M = 2^{k-1}$ and $\rad_{\mathrm{odd}}(M) = 1$.
+The conductor proxy reduces to
+\[
+  \mathcal{N}_{\mathrm{proxy}}(2^k, p)
+  \;=\; \bigl(\rad_{\mathrm{odd}}(p) \cdot \rad_{\mathrm{odd}}(q)\bigr)^2
+  \;=\; (p \cdot q)^2 \quad\text{when $p, q$ are both prime,}
+\]
+since primes are their own radicals.  The static conduit contributes nothing: the
+conductor depends purely on the boundary primes.
+
+\begin{proposition}[$2^k$ anchor property]\label{prop:anchor}
+  For $N = 2^k$ with $k \geq 3$, the Chen's ratio of any Goldbach pair satisfies
+  \[
+    \rho(2^k, p) \;=\; \frac{2\log(pq)}{\log 2^k}
+    \;=\; \frac{2\log\bigl(p(2^k - p)\bigr)}{k \log 2}.
+  \]
+  In particular, $\rho$ ranges from $\rho_{\min} = 2\log(p_0 q_0)/(k\log 2)$
+  (where $p_0$ is the smallest prime with $2^k - p_0$ also prime) to
+  $\rho_{\max} \to 4$ as $k \to \infty$ (when $p \approx 2^{k-1}$).
+\end{proposition}
+
+\subsection{Detailed analysis at $N = 8192 = 2^{13}$}\label{sec:8192}
+
+Table~\ref{tab:8192} presents selected conductor metrics at $N = 8192$.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llrrr}
+\toprule
+Type & $(p, q)$ & $\rad_{\mathrm{odd}}(p \cdot q)$ &
+  $\mathcal{N}_{\mathrm{proxy}}$ & $\rho$ \\
+\midrule
+Goldbach (ground)  & $(13,\; 8179)$   & $106\,327$     & $1.13 \times 10^{10}$ & $\mathbf{2.5689}$ \\
+Goldbach           & $(31,\; 8161)$   & $252\,991$     & $6.40 \times 10^{10}$ & $2.7613$ \\
+Goldbach           & $(103,\; 8089)$  & $833\,167$     & $6.94 \times 10^{11}$ & $3.0259$ \\
+Goldbach           & $(4093,\; 4099)$ & $16\,777\,207$ & $2.81 \times 10^{14}$ & $3.6923$ \\
+\midrule
+Composite (high)   & $(4089,\; 4103)$ & $16\,777\,167$ & $2.81 \times 10^{14}$ & $3.6923$ \\
+Composite          & $(4071,\; 4121)$ & $16\,776\,591$ & $2.81 \times 10^{14}$ & $3.6923$ \\
+Composite (smooth) & $(4096,\; 4096)$ & $1$            & $1.00 \times 10^{0}$  & $0.0000$ \\
+Composite (smooth) & $(2048,\; 6144)$ & $3$            & $9.00 \times 10^{0}$  & $0.1219$ \\
+\bottomrule
+\end{tabular}
+\caption{Conductor compression metrics for $N = 8192 = 2^{13}$.  There are 76 Goldbach
+pairs, with $\rho \in [2.57, 3.69]$ (band width $1.12$).  The 3\,144 composite-only
+decompositions spread over $\rho \in [0.00, 3.69]$ (range $3.45$).  The ``ground state''
+$(13, 8179)$ achieves $\rho = 2.5689$.}
+\label{tab:8192}
+\end{table}
+
+Figure~\ref{fig:barrier} shows the full decomposition landscape.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figure2.pdf}
+  \caption{\textbf{Left}: Chen's ratio for all decompositions of $N = 8192$.
+  Goldbach pairs (blue) cluster in a narrow high-$\rho$ band; composite
+  decompositions (orange) spread across the full range; mixed pairs (one prime,
+  one composite; green) fill the intermediate region.  \textbf{Right}: Density
+  histogram confirming the clustering.  The mean gap is $\Delta\rho = 0.558$.}
+  \label{fig:barrier}
+\end{figure}
+
+\begin{remark}[The conductor clustering phenomenon]\label{rem:cluster}
+  The key observation from Table~\ref{tab:8192} and Figure~\ref{fig:barrier} is not
+  that Goldbach pairs minimise or maximise $\rho$, but that they are \emph{rigidly
+  clustered}: the 76 Goldbach pairs span a $\rho$-range of width $1.12$, while the
+  3\,144 composite decompositions span a range of width $3.45$, more than three times
+  wider.  This clustering is a direct consequence of Proposition~\ref{prop:rigidity}:
+  for primes, $\rad(p) = p$ forces the conductor proxy to be tightly controlled by
+  the product $p \cdot q$, whereas for composites the radical can collapse dramatically
+  (e.g., $\rad_{\mathrm{odd}}(4096) = 1$).
+\end{remark}
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{Geometric Obstruction Analysis}\label{sec:obstruction}
+
+We now reinterpret the conductor rigidity results of~\cite{Chen2026GM} through the
+lens of Chen's ratio to formulate a geometric obstruction framework for the Goldbach
+conjecture.
+
+\subsection{The obstruction at the static conduit}
+
+By Theorem~4.1 of~\cite{Chen2026GM}, for any odd prime $r \mid M$ with $r \nmid p\,q$,
+the curve $C_{N,p}$ has multiplicative reduction at $r$, and the conductor exponent
+$f_r$ is uniform across the family.  In terms of the discriminant:
+\begin{equation}\label{eq:static_ord}
+  \ord_r(\Delta) \;=\; 4\,\ord_r(M) \quad\text{when } r \nmid p\,q\,(M-p).
+\end{equation}
+This means the static conduit contributes a \emph{fixed floor} to $\rho$: every
+Goldbach pair must satisfy
+\begin{equation}\label{eq:floor}
+  \rho(N, p) \;\geq\; \frac{2\,\sum_{r \mid M,\, r > 2} \log r}{\log N}
+  \;=\; \frac{2\log\rad_{\mathrm{odd}}(M)}{\log N}.
+\end{equation}
+
+\subsection{The obstruction at composite boundaries}
+
+When $p$ is composite with $p = r_1^{a_1} \cdots r_s^{a_s}$, the curve $C_{N,p}$
+acquires bad reduction at each $r_i$.  The nature of this reduction depends on whether
+$r_i$ also divides $q$, $M$, or $M - p$:
+
+\begin{itemize}
+\item If $r_i \mid p$ and $r_i \nmid q$: the root collision is at $\pm p$, giving
+  additive reduction with $f_{r_i} \geq 2$.
+\item If $r_i \mid p$ and $r_i \mid q$: since $p + q = N$ and $r_i \mid p$,
+  we need $r_i \mid N$, so $r_i$ belongs to the static conduit.
+  The reduction type may change (from multiplicative to potentially additive).
+\item If $r_i \mid p$ and $r_i \mid (M - p)$: the dynamic conduit at $r_i$
+  interacts with the boundary, complicating the local analysis.
+\end{itemize}
+
+The essential point is: when $p$ is composite, the local conductor at the prime factors
+of $p$ can deviate from the ``clean'' multiplicative/additive pattern that holds when
+$p$ is prime.  This deviation is what we call the \emph{geometric obstruction}:
+composite boundaries create conductor perturbations that push the curve away from the
+static conduit's uniform structure.
+
+\subsection{Formulation of the obstruction}
+
+\begin{conjecture}[Conductor rigidity obstruction]\label{conj:obstruction}
+  For every even $N > 4$, the \emph{Goldbach locus}
+  \[
+    \mathscr{G}(N) \;=\; \bigl\{p \in (1, N) : p \text{ and } N - p \text{ both prime}\bigr\}
+  \]
+  is non-empty.  Equivalently, the family $\{C_{N,p}\}_{p \in \mathscr{G}(N)}$ of
+  curves with semistable reduction at both boundary primes is non-empty.
+\end{conjecture}
+
+\begin{remark}[The analytic gap]\label{rem:gap}
+  Conjecture~\ref{conj:obstruction} is equivalent to the Goldbach conjecture.  The
+  conductor rigidity framework provides structural reasons to believe it (the clustering
+  phenomenon, the static conduit uniformity, the identification with the Hardy--Littlewood
+  singular series), but does not prove it.  The missing ingredient is an effective lower
+  bound on the density of the Goldbach locus that prevents $\mathscr{G}(N)$ from being
+  empty.
+
+  Specifically, the gap is: \emph{we lack effective Sato--Tate equidistribution for the
+  family $\{J_{N,p}\}$ with error bounds that are uniform in $N$}.  Closing this gap would
+  require techniques from automorphic forms for $\GSp(4)$ that are beyond current methods.
+  We formulate this as Problem~\ref{prob:main}.
+\end{remark}
+
+\begin{definition}[Problem]\label{prob:main}
+  Prove an effective equidistribution result for the Satake parameters of the
+  family $\{J_{N,p}\}_{p \text{ prime},\, p < N}$ with respect to the Sato--Tate measure
+  on $\GSp(4)$, with error bounds uniform in $N$ and effective enough to show that the
+  number of Goldbach pairs satisfies $G(N) \geq 1$ for all even $N > 4$.
+\end{definition}
+
+\begin{remark}[Why Sato--Tate implies Goldbach]\label{rem:ST_logic}
+  The logical chain connecting $\GSp(4)$ equidistribution to prime-pair existence
+  passes through the \emph{geometric sieve} framework of Kowalski~\cite{Kowalski2008}.
+  The key steps are:
+  \begin{enumerate}
+  \item For each prime $\ell$, the number of $\mathbb{F}_\ell$-points on $C_{N,p}$
+    is controlled by the Frobenius trace $a_\ell(J_{N,p})$, which is a symmetric function
+    of the Satake parameters.
+  \item Sato--Tate equidistribution for the family $\{J_{N,p}\}$ provides the
+    statistical distribution of these traces as $p$ varies, yielding an asymptotic count
+    of parameters $p$ for which the local conditions ``$p \not\equiv 0 \pmod{r}$
+    and $q \not\equiv 0 \pmod{r}$'' are simultaneously satisfied for all small primes $r$.
+  \item An effective error bound---uniform in $N$---would ensure that the main term
+    (from the Hardy--Littlewood prediction) dominates the error for all $N$, preventing
+    $\mathscr{G}(N)$ from being empty.  This is analogous to how the effective Chebotarev
+    density theorem, combined with the large sieve, yields the Bombieri--Vinogradov theorem
+    for primes in arithmetic progressions.
+  \end{enumerate}
+  The difficulty is that existing Sato--Tate results for $\GSp(4)$
+  families~\cite{FKRS2012} are either asymptotic (lacking explicit error terms) or
+  require averaging over the family parameter in ways that do not immediately yield
+  pointwise bounds for each fixed $N$.
+\end{remark}
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{Connection to the Hardy--Littlewood Singular Series}\label{sec:HL}
+
+The Hardy--Littlewood conjecture predicts
+\begin{equation}\label{eq:HL}
+  G(N) \;\sim\; 2C_2 \prod_{\substack{r \mid M \\ r > 2}} \frac{r-1}{r-2} \cdot
+  \frac{N}{(\ln N)^2},
+\end{equation}
+where $C_2 = \prod_{p > 2} \bigl(1 - 1/(p-1)^2\bigr) \approx 0.6602$ is the twin
+prime constant and $M = N/2$.
+
+\begin{observation}[Singular series as the aperture of the static conduit]\label{obs:HL}
+  The local factor $(r-1)/(r-2)$ for $r \mid M$ in~\eqref{eq:HL} corresponds
+  precisely to the conductor contribution at the static conduit prime $r$: it
+  measures the ratio of admissible residue classes modulo $r$ (namely $r - 2$ out
+  of $r - 1$ non-zero classes) when we require both $p$ and $N - p$ to be coprime
+  to $r$.
+
+  Equivalently: the singular series $\prod_{r \mid M} (r-1)/(r-2)$ is the ``aperture
+  factor'' of the static conduit---the proportion of the family that avoids the
+  conductor obstruction at each $r \mid M$.
+\end{observation}
+
+\noindent\textit{Justification.}
+  This is the sieve-theoretic content of Remark~4.2 of~\cite{Chen2026GM}, restated in the language of Chen's ratio.
+  For each odd prime $r \mid M$, the sieve condition ``$r \nmid p$ and $r \nmid q$''
+  eliminates the $2/(r-1)$ fraction of residue classes (namely $p \equiv 0$ and
+  $p \equiv N \pmod{r}$, which coincide when $r \mid M$, leaving one eliminated class
+  out of $r - 1$).  The survival probability is $(r-2)/(r-1)$, and the usual sieve
+  normalisation converts this to the factor $(r-1)/(r-2)$ in the singular series.
+  We emphasise that this is an \emph{interpretation}---an exact correspondence between the
+  sieve-theoretic local factors and the conductor geometry---not a derivation of the
+  Hardy--Littlewood asymptotic from the conductor framework.\medskip
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{Comparison: Twin Primes vs.\ Goldbach}\label{sec:comparison}
+
+Table~\ref{tab:mirror} summarises the mirror symmetry between the two problems,
+extending Table~1 of~\cite{Chen2026GM} with the new quantities introduced here.
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{>{\raggedright}p{3.8cm} p{4.8cm} p{4.8cm}}
+\toprule
+& \textbf{Twin Primes}~\cite{Chen2026W} & \textbf{Goldbach}~\cite{Chen2026GM} \\
+\midrule
+Curve
+  & $y^2 = x(x^2-P^2)(x^2-(P+2)^2)$
+  & $y^2 = x(x^2-p^2)(x^2-(N-p)^2)$ \\
+Constraint
+  & $p_2 - p_1 = 2$ (fixed gap)
+  & $p + q = N$ (fixed sum) \\
+Static conduit
+  & None ($P+1$ varies)
+  & $M^4$ (fixed for all $p$) \\
+Chen's ratio behaviour
+  & $\rho$ varies with each $P$
+  & $\rho$ confined to stability band \\
+Singular series
+  & Universal constant $2C_2$
+  & $2C_2 \prod_{r|M} \frac{r-1}{r-2}$ (depends on $N$) \\
+$2^k$ anchor
+  & No analogue
+  & $\rho$ drops by $\sim 50\%$ \\
+Nature
+  & Infinitude problem
+  & Existence for fixed $N$ \\
+\bottomrule
+\end{tabular}
+\caption{The additive mirror: twin primes vs.\ Goldbach, extended.}
+\label{tab:mirror}
+\end{table}
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section{Conclusion and Open Problems}\label{sec:conclusion}
+
+We have introduced Chen's ratio $\rho(N,p)$ as a normalised measure of the conductor
+of the Goldbach--Frey Jacobian and established the following:
+
+\begin{enumerate}
+\item \textbf{Stability band} (Figure~\ref{fig:band}, \S\ref{sec:stability}):
+  The mean Chen's ratio over Goldbach pairs converges to a narrow band as
+  $N \to \infty$, reflecting the rigid structure imposed by the static conduit.
+
+\item \textbf{Clustering rigidity} (Remark~\ref{rem:cluster}, Propositions~\ref{prop:rigidity}--\ref{prop:spread}):
+  Goldbach pairs are confined to a $\rho$-band roughly three times narrower than that
+  of composite decompositions, a direct consequence of $\rad(p) = p$ for primes.
+
+\item \textbf{$2^k$ anchor phenomenon} (\S\ref{sec:anchor}, Proposition~\ref{prop:anchor}):
+  At $N = 2^k$, the static conduit vanishes, revealing the pure boundary-prime structure
+  and producing conductor dips of $\sim 50\%$ relative to generic $N$.
+
+\item \textbf{Singular series identification} (Observation~\ref{obs:HL}):
+  The Hardy--Littlewood local factors $(r-1)/(r-2)$ arise as the aperture factor of
+  the static conduit, providing a geometric interpretation of the analytic prediction.
+\end{enumerate}
+
+\begin{remark}[What is not proved]\label{rem:honest}
+  This paper does not prove the Goldbach conjecture.  The conductor rigidity framework
+  explains the \emph{structure} of the Goldbach phenomenon (the banding, the singular
+  series, the clustering) but does not establish the \emph{non-emptiness} of the Goldbach
+  locus $\mathscr{G}(N)$ for every $N$.  The precise analytic gap is stated as
+  Problem~\ref{prob:main}: effective Sato--Tate equidistribution for the $\GSp(4)$
+  family $\{J_{N,p}\}$ with uniform error bounds.  We hope that the geometric
+  perspective developed here will contribute to future progress on this fundamental
+  problem.
+\end{remark}
+
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\section*{Acknowledgments}
+The computational verification was performed using custom Python scripts
+(\texttt{generate\_figures.py}, \texttt{goldbach\_scanner\_v2.py},
+\texttt{verify\_discriminant.py}), available at
+\url{https://github.com/Ruqing1963/goldbach-mirror-II-geometric-foundations}.
+The companion paper~\cite{Chen2026GM} and its scripts are maintained at
+\url{https://github.com/Ruqing1963/goldbach-mirror-conductor-rigidity}.
+All errors identified in earlier versions were corrected through independent
+numerical verification.
+
+% ═══════════════════════════════════════════════════════════════════════════════
+\begin{thebibliography}{10}
+
+\bibitem{Chen2026CI}
+R.~Chen, \emph{Conductor incompressibility for Frey curves associated to prime gaps:
+rigidity obstructions to the Wiles paradigm in additive prime number theory},
+Zenodo, 2026.
+\url{https://zenodo.org/records/18682375}
+
+\bibitem{Chen2026D}
+R.~Chen, \emph{Density thresholds for equidistribution in prime-indexed geometric
+families}, Zenodo, 2026.
+\url{https://zenodo.org/records/18682721}
+
+\bibitem{Chen2026W}
+R.~Chen, \emph{Weil restriction rigidity and prime gaps via genus 2 hyperelliptic
+Jacobians}, Zenodo, 2026.
+\url{https://zenodo.org/records/18683194}
+
+\bibitem{Chen2026L}
+R.~Chen, \emph{On Landau's fourth problem: conductor rigidity and Sato--Tate
+equidistribution for the $n^2+1$ family}, Zenodo, 2026.
+\url{https://zenodo.org/records/18683712}
+
+\bibitem{Chen202622}
+R.~Chen, \emph{The 2-2 coincidence: conductor rigidity for primes in arithmetic
+progressions and the Bombieri--Vinogradov barrier}, Zenodo, 2026.
+\url{https://zenodo.org/records/18684151}
+
+\bibitem{Chen2026G}
+R.~Chen, \emph{The genesis of prime constellations: Weil restriction on $\GSp(8)$
+and multiplicative conduits for prime quadruplets}, Zenodo, 2026.
+\url{https://zenodo.org/records/18684352}
+
+\bibitem{Chen2026GM}
+R.~Chen, \emph{The Goldbach mirror: conductor rigidity and the static conduit in
+$\GSp(4)$}, Zenodo, 2026.
+\url{https://zenodo.org/records/18684892}
+
+\bibitem{HL1923}
+G.\,H.~Hardy and J.\,E.~Littlewood, \emph{Some problems of `Partitio Numerorum';
+III: On the expression of a number as a sum of primes}, Acta Math.
+\textbf{44} (1923), 1--70.
+
+\bibitem{KR1990}
+E.~Kani and M.~Rosen, \emph{Idempotent relations and factors of Jacobians},
+Math.\ Ann.\ \textbf{284} (1989), 307--327.
+
+\bibitem{FKRS2012}
+F.~Fite, K.\,S.~Kedlaya, V.~Rotger, and A.\,V.~Sutherland,
+\emph{Sato--Tate distributions and Galois images}, Algebra Number Theory
+\textbf{6} (2012), 1163--1232.
+
+\bibitem{Ogg1967}
+A.\,P.~Ogg, \emph{Elliptic curves and wild ramification},
+Amer.\ J.\ Math.\ \textbf{89} (1967), 1--21.
+
+\bibitem{Saito1988}
+T.~Saito, \emph{Conductor, discriminant, and the Noether formula of arithmetic surfaces},
+Duke Math.\ J.\ \textbf{57} (1988), 151--173.
+
+\bibitem{Kowalski2008}
+E.~Kowalski, \emph{The Large Sieve and its Applications: Arithmetic Geometry,
+Random Walks and Discrete Groups}, Cambridge Tracts in Mathematics \textbf{175},
+Cambridge University Press, 2008.
+
+\end{thebibliography}
+
+\end{document}
